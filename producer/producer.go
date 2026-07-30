@@ -3,25 +3,17 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"proiect-rabbitmq/config"
 	"proiect-rabbitmq/schema"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatal("Error connecting to RabbitMQ:", err)
-	}
-	defer conn.Close()
+	rabbit := config.ConnectRabbitMQ()
+	defer rabbit.Close()
 
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatal("Error creating channel:", err)
-	}
-	defer ch.Close()
-
-	_, err = ch.QueueDeclare("orders_dlq", false, false, false, false, nil)
+	_, err := rabbit.Channel.QueueDeclare("orders_dlq", false, false, false, false, nil)
 	if err != nil {
 		log.Fatal("Error declaring DLQ:", err)
 	}
@@ -31,7 +23,7 @@ func main() {
 		"x-dead-letter-exchange":    "",
 	}
 
-	q, err := ch.QueueDeclare("orders_queue", false, false, false, false, args)
+	q, err := rabbit.Channel.QueueDeclare("orders_queue", false, false, false, false, args)
 	if err != nil {
 		log.Fatal("Error declaring orders queue", err)
 	}
@@ -51,7 +43,7 @@ func main() {
 			continue
 		}
 
-		err = ch.Publish("", q.Name, false, false, amqp.Publishing{
+		err = rabbit.Channel.Publish("", q.Name, false, false, amqp.Publishing{
 			ContentType: "application/json",
 			Body:        body,
 		})

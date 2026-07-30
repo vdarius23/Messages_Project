@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"proiect-rabbitmq/config"
 	"proiect-rabbitmq/schema"
 	"time"
 
@@ -34,29 +35,20 @@ func orderProcess(d amqp.Delivery) {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatalf("RabbitMQ connection error: %v", err)
-	}
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("channel opening error: %v", err)
-	}
-	defer ch.Close()
+	rabbit := config.ConnectRabbitMQ()
+	defer rabbit.Close()
 
 	args := amqp.Table{
 		"x-dead-letter-routing-key": "orders_dlq",
 		"x-dead-letter-exchange":    "",
 	}
 
-	q, err := ch.QueueDeclare("orders_queue", false, false, false, false, args)
+	q, err := rabbit.Channel.QueueDeclare("orders_queue", false, false, false, false, args)
 	if err != nil {
 		log.Fatalf("error declaring orders queue: %v", err)
 	}
 
-	msgs, err := ch.Consume(q.Name, "", false, false, false, false, nil)
+	msgs, err := rabbit.Channel.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("consume error: %v", err)
 	}
