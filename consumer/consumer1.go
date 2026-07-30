@@ -4,20 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"proiect-rabbitmq/schema"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Order struct {
-	ID        string  `json:"id" bson:"_id,omitempty"`
-	UserEmail string  `json:"user_email" bson:"user_email"`
-	Amount    float64 `json:"amount" bson:"amount"`
-	Status    string  `json:"status" bson:"status"`
-}
-
 func orderProcess(d amqp.Delivery) {
-	var order Order
+	var order schema.Order
 
 	err := json.Unmarshal(d.Body, &order)
 	if err != nil {

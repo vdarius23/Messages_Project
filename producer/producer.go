@@ -3,15 +3,10 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"proiect-rabbitmq/schema"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
-
-type Order struct {
-	ID        string  `json:"id"`
-	UserEmail string  `json:"user_email"`
-	Amount    float64 `json:"amount"`
-}
 
 func main() {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
@@ -41,7 +36,7 @@ func main() {
 		log.Fatal("Error declaring orders queue", err)
 	}
 
-	orders := []Order{
+	orders := []schema.Order{
 		{ID: "ORD-101", UserEmail: "ana@gmail.com", Amount: 150.50},
 		{ID: "ORD-102", UserEmail: "fraudster@fake.com", Amount: -50.00}, // Invalidă (sumă negativă)
 		{ID: "ORD-103", UserEmail: "dan@gmail.com", Amount: 320.00},
