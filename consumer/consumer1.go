@@ -38,14 +38,24 @@ func main() {
 	rabbit := config.ConnectRabbitMQ()
 	defer rabbit.Close()
 
+	err := rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
+	if err != nil {
+		log.Fatalf("Error declaring exchange: %v", err)
+	}
+
 	args := amqp.Table{
 		"x-dead-letter-routing-key": "orders_dlq",
 		"x-dead-letter-exchange":    "",
 	}
 
-	q, err := rabbit.Channel.QueueDeclare("orders_queue", false, false, false, false, args)
+	q, err := rabbit.Channel.QueueDeclare("consumer1_queue", false, false, false, false, args)
 	if err != nil {
 		log.Fatalf("error declaring orders queue: %v", err)
+	}
+
+	err = rabbit.Channel.QueueBind(q.Name, "", "orders_exchange", false, nil)
+	if err != nil {
+		log.Fatalf("Eroare bind coadă la exchange: %v", err)
 	}
 
 	msgs, err := rabbit.Channel.Consume(q.Name, "", false, false, false, false, nil)
