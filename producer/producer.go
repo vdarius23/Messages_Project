@@ -13,18 +13,12 @@ func main() {
 	rabbit := config.ConnectRabbitMQ()
 	defer rabbit.Close()
 
-	ch, err := rabbit.Conn.Channel()
-	if err != nil {
-		log.Fatal("Error creating channel:", err)
-	}
-	defer ch.Close()
-
-	_, err = ch.QueueDeclare("orders_dlq", false, false, false, false, nil)
+	_, err := rabbit.Channel.QueueDeclare("orders_dlq", false, false, false, false, nil)
 	if err != nil {
 		log.Fatal("Error declaring DLQ:", err)
 	}
 
-	err = ch.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
+	err = rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("Error declaring exchange : %v", err)
 	}
@@ -44,7 +38,7 @@ func main() {
 			continue
 		}
 
-		err = ch.Publish(
+		err = rabbit.Channel.Publish(
 			"orders_exchange", // Trimitem la Exchange-ul Fanout
 			"",                // RoutingKey e ignorat de Fanout
 			false,
