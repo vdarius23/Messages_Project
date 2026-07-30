@@ -26,14 +26,9 @@ func main() {
 		log.Fatal("Error declaring DLQ:", err)
 	}
 
-	args := amqp.Table{
-		"x-dead-letter-routing-key": "orders_dlq",
-		"x-dead-letter-exchange":    "",
-	}
-
-	q, err := ch.QueueDeclare("orders_queue", false, false, false, false, args)
+	err = ch.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
 	if err != nil {
-		log.Fatal("Error declaring orders queue", err)
+		log.Fatalf("Error declaring exchange : %v", err)
 	}
 
 	orders := []schema.Order{
@@ -51,10 +46,16 @@ func main() {
 			continue
 		}
 
-		err = ch.Publish("", q.Name, false, false, amqp.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-		})
+		err = ch.Publish(
+			"orders_exchange", // Trimitem la Exchange-ul Fanout
+			"",                // RoutingKey e ignorat de Fanout
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: "application/json",
+				Body:        body,
+			},
+		)
 		if err != nil {
 			log.Printf("Error publishing order: %v", err)
 		} else {
