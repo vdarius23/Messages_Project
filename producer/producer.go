@@ -3,19 +3,17 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"proiect-rabbitmq/config"
 	"proiect-rabbitmq/schema"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatal("Error connecting to RabbitMQ:", err)
-	}
-	defer conn.Close()
+	rabbit := config.ConnectRabbitMQ()
+	defer rabbit.Close()
 
-	ch, err := conn.Channel()
+	ch, err := rabbit.Conn.Channel()
 	if err != nil {
 		log.Fatal("Error creating channel:", err)
 	}

@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	amqp "github.com/rabbitmq/amqp091-go"
+	"proiect-rabbitmq/config"
 )
 
 type FraudLog struct {
@@ -16,24 +15,15 @@ type FraudLog struct {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatalf("RabbitMQ connection error: %v", err)
-	}
-	defer conn.Close()
+	rabbit := config.ConnectRabbitMQ()
+	defer rabbit.Close()
 
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("channel opening error: %v", err)
-	}
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare("orders_dlq", false, false, false, false, nil)
+	q, err := rabbit.Channel.QueueDeclare("orders_dlq", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("dlq declaration error: %v", err)
 	}
 
-	msgs, err := ch.Consume(q.Name, "", true, false, false, false, nil)
+	msgs, err := rabbit.Channel.Consume(q.Name, "", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("error from dlq queue: %v", err)
 	}

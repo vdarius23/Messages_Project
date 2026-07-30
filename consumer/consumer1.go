@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"proiect-rabbitmq/config"
 	"proiect-rabbitmq/schema"
 	"time"
 
@@ -34,19 +35,10 @@ func orderProcess(d amqp.Delivery) {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatalf("RabbitMQ connection error: %v", err)
-	}
-	defer conn.Close()
+	rabbit := config.ConnectRabbitMQ()
+	defer rabbit.Close()
 
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("channel opening error: %v", err)
-	}
-	defer ch.Close()
-
-	err = ch.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
+	err := rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("Error declaring exchange: %v", err)
 	}
@@ -56,17 +48,17 @@ func main() {
 		"x-dead-letter-exchange":    "",
 	}
 
-	q, err := ch.QueueDeclare("consumer1_queue", false, false, false, false, args)
+	q, err := rabbit.Channel.QueueDeclare("consumer1_queue", false, false, false, false, args)
 	if err != nil {
 		log.Fatalf("error declaring orders queue: %v", err)
 	}
 
-	err = ch.QueueBind(q.Name, "", "orders_exchange", false, nil)
+	err = rabbit.Channel.QueueBind(q.Name, "", "orders_exchange", false, nil)
 	if err != nil {
 		log.Fatalf("Eroare bind coadă la exchange: %v", err)
 	}
 
-	msgs, err := ch.Consume(q.Name, "", false, false, false, false, nil)
+	msgs, err := rabbit.Channel.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("consume error: %v", err)
 	}
