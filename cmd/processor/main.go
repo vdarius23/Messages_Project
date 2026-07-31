@@ -25,11 +25,11 @@ func orderProcess(d amqp.Delivery) {
 	time.Sleep(1 * time.Second)
 
 	if order.Amount <= 0 || order.Amount > 10000 {
-		fmt.Printf("[order] order %s rejected (%.2f RON)", order.ID, order.Amount)
+		fmt.Printf("[order] order %s rejected (%.2f RON)\n", order.ID, order.Amount)
 		d.Nack(false, false)
 	} else {
 		order.Status = "PROCESSED"
-		fmt.Printf("[order] order sent %s with status: %s", order.ID, order.Status)
+		fmt.Printf("[order] order sent %s with status: %s\n", order.ID, order.Status)
 		d.Ack(false)
 	}
 }
@@ -40,7 +40,12 @@ func main() {
 
 	err := rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
 	if err != nil {
-		log.Fatalf("Error declaring exchange: %v", err)
+		log.Fatalf("exchange declaration error: %v", err)
+	}
+
+	_, err = rabbit.Channel.QueueDeclare("orders_dlq", false, false, false, false, nil)
+	if err != nil {
+		log.Fatalf("dlq declaration error: %v", err)
 	}
 
 	args := amqp.Table{
@@ -55,7 +60,7 @@ func main() {
 
 	err = rabbit.Channel.QueueBind(q.Name, "", "orders_exchange", false, nil)
 	if err != nil {
-		log.Fatalf("Eroare bind coadă la exchange: %v", err)
+		log.Fatalf("queue bind to exchange error: %v", err)
 	}
 
 	msgs, err := rabbit.Channel.Consume(q.Name, "", false, false, false, false, nil)

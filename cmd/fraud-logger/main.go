@@ -34,6 +34,6 @@ func main() {
 		var logData FraudLog
 		json.Unmarshal(d.Body, &logData)
 		logData.Reason = "SUSPICIOUS_AMOUNT_OR_INVALID"
-		fmt.Printf("[validation] invalid order %s from %s (%.2f RON)", logData.ID, logData.UserEmail, logData.Amount)
+		fmt.Printf("[validation] invalid order %s from %s (%.2f RON)\n", logData.ID, logData.UserEmail, logData.Amount)
 	}
 }

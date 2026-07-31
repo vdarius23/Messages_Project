@@ -13,12 +13,7 @@ func main() {
 	rabbit := config.ConnectRabbitMQ()
 	defer rabbit.Close()
 
-	_, err := rabbit.Channel.QueueDeclare("orders_dlq", false, false, false, false, nil)
-	if err != nil {
-		log.Fatal("Error declaring DLQ:", err)
-	}
-
-	err = rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
+	err := rabbit.Channel.ExchangeDeclare("orders_exchange", "fanout", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("Error declaring exchange : %v", err)
 	}
